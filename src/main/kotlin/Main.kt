@@ -1,3 +1,4 @@
+import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Node
@@ -104,13 +105,12 @@ class Check(private val side: Int) : Region() {
         return horizontalWin || verticalWin || diagonalWin || reverseDiagonalWin
     }
 
-    fun victoryResult(): String {
+    fun victoryResult(): String? {
         return if (victoryEligible(Mark.LeftMarked))
             "Red wins!"
         else if (victoryEligible(Mark.RightMarked))
             "Blue wins!"
-        else
-            "Nobody wins!"
+        else null
     }
 
     fun autoResize() {
@@ -132,24 +132,41 @@ class Check(private val side: Int) : Region() {
 
     init {
         children.add(fields)
+
+        fields.onMouseClicked = EventHandler {
+            val victoryResult = victoryResult()
+            if (victoryResult != null)
+                println(victoryResult)
+        }
     }
 }
 
-class CheckeredApp : App(MainView::class)
-class MainView : View() {
-    private val check = Check(5)
+class CheckeredApp : App(CheckSizeView::class)
 
-    override val root = vbox {
-        padding = Insets(20.0)
-        spacing = 20.0
-        add(check)
-
-        button("isVictory?") {
-            action {
-                println(check.victoryResult())
-                check.autoResize()
+class CheckSizeView : View() {
+    override val root = form {
+        fieldset {
+            field("Select amount of rectangles per side") {
+                val spin = spinner(3)
+                add(spin)
+                button("Commit").action {
+                    find<MainView>(MainView::check to Check(spin.value)).openModal()
+                }
             }
         }
+
+        title = "Size Selector"
+    }
+}
+
+class MainView : Fragment() {
+    val check: Check by param()
+
+    override val root = vbox {
+        add(check)
+
+        padding = Insets(20.0)
+        spacing = 20.0
 
         alignment = Pos.CENTER
         title = "Red Blue Unmarked"
